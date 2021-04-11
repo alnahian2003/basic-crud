@@ -2,10 +2,28 @@
 require_once "inc/functions.php";
 $info = "";
 $task = $_GET["task"] ?? ["all"];
+$error = $_GET["error"] ?? ["0"];
 if ($task == "seed") {
     seed(DB);
     $info = "Seeding is Complete!";
 };
+
+if (isset($_POST["submit"])) {
+    $fname = filter_input(INPUT_POST, "fname", FILTER_SANITIZE_STRING);
+    $lname = filter_input(INPUT_POST, "lname", FILTER_SANITIZE_STRING);
+    $roll = filter_input(INPUT_POST, "roll", FILTER_SANITIZE_STRING);
+
+    if ($fname != "" && $lname != "" && $roll != "") {
+        $result = addStudent($fname, $lname, $roll);
+        if ($result) {
+            header("location: /lwhh/basic-crud/index.php?task=all");
+        } else{
+            header("location: /lwhh/basic-crud/index.php?task=add&error=1");
+        }
+    }
+}
+
+    
 ?>
 
 <!DOCTYPE html>
@@ -115,9 +133,11 @@ if ($task == "seed") {
                 <!-- Heading Section -->
                 <header>
                     <div class="heading-intro">
+                    <a href="/lwhh/basic-crud/index.php">
                         <h1>
                             PHP CRUD Operation
                         </h1>
+                    </a>
                         <small>Create, Read, Update & Delete</small>
                         <hr />
                         <h2>কিতাবুল আন্দাজ প্রাথমিক বিদ্যালয়</h2>
@@ -138,6 +158,9 @@ if ($task == "seed") {
                             if ($info != "") {
                                 echo "{$info}";
                             }
+                            if ("1" == $error) {
+                                echo "Duplicate Roll Number";
+                            }
                             ?>
                         </p>
                     </div>
@@ -157,12 +180,10 @@ if ($task == "seed") {
                     <?php endif; ?>
 
                     <?php
-                    if ($task == "add") : {
-                        }
+                    if ($task == "add") :
                     ?>
-
                         <div class="column column-100 column-offset-100">
-                            <form action="index.php?all" method="POST">
+                            <form action="/lwhh/basic-crud/index.php?task=all" method="POST">
 
                                 <label for="fname">First Name:</label>
                                 <input id="fname" name="fname" type="text">
@@ -173,7 +194,7 @@ if ($task == "seed") {
                                 <label for="roll" placeholder="Enter Roll Number">Roll:</label>
                                 <input id="roll" name="roll" type="number">
 
-                                <button class="button btn-green" type="submit">Add New Student</button>
+                                <button class="button btn-green" name="submit" type="submit">Add New Student</button>
                             </form>
                         </div>
 
