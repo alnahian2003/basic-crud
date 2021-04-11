@@ -8,22 +8,50 @@ if ($task == "seed") {
     $info = "Seeding is Complete!";
 };
 
+if ($task == "delete") {
+    $id = filter_input(INPUT_GET, "id", FILTER_SANITIZE_STRING);
+    if ($id>0) {
+        deleteStudent($id, DB);
+        header("location: /lwhh/basic-crud/index.php?task=all");
+    }
+}
+
+$fname = "";
+$lname = "";
+$roll = "";
 if (isset($_POST["submit"])) {
     $fname = filter_input(INPUT_POST, "fname", FILTER_SANITIZE_STRING);
     $lname = filter_input(INPUT_POST, "lname", FILTER_SANITIZE_STRING);
     $roll = filter_input(INPUT_POST, "roll", FILTER_SANITIZE_STRING);
+    $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_STRING);
 
-    if ($fname != "" && $lname != "" && $roll != "") {
-        $result = addStudent($fname, $lname, $roll);
-        if ($result) {
-            header("location: /lwhh/basic-crud/index.php?task=all");
-        } else{
-            header("location: /lwhh/basic-crud/index.php?task=add&error=1");
+    if ($id) {
+        // Update the existing student
+        if ($fname != "" && $lname != "" && $roll != ""){
+            $result = updateStudent($fname, $lname, $roll, $id, DB);
+            if ($result) {
+                header("location: /lwhh/basic-crud/index.php?task=all");
+            }
+            else {
+                $error = 1;
+            }
+        }
+    }else {
+        // Add a new student
+        if ($fname != "" && $lname != "" && $roll != "") {
+            $result = addStudent($fname, $lname, $roll, DB);
+            if ($result) {
+                header("location: /lwhh/basic-crud/index.php?task=all");
+            }
+            else {
+                $error = 1;
+            }
         }
     }
-}
 
     
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -36,7 +64,7 @@ if (isset($_POST["submit"])) {
     <title>PHP CRUD Operation</title>
 
     <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,500,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Hind+Siliguri:500,700">
 
     <!-- CSS Reset -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
@@ -45,6 +73,9 @@ if (isset($_POST["submit"])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
 
     <style>
+        *{
+            font-family: "Hind Siliguri", sans-serif;
+        }
         body {
             overflow-x: hidden !important;
             margin-top: 50px;
@@ -130,6 +161,7 @@ if (isset($_POST["submit"])) {
     <div class="contianer">
         <div class="row">
             <div class="column column-60 column-offset-20">
+            
                 <!-- Heading Section -->
                 <header>
                     <div class="heading-intro">
@@ -140,7 +172,7 @@ if (isset($_POST["submit"])) {
                     </a>
                         <small>Create, Read, Update & Delete</small>
                         <hr />
-                        <h2>কিতাবুল আন্দাজ প্রাথমিক বিদ্যালয়</h2>
+                        <h2>কিতাবুল আন্দাজ প্রাথমিক বিশ্ববিদ্যালয়</h2>
                         <h4>স্টুডেন্ট ডেটাবেজ</h4>
                     </div>
 
@@ -159,7 +191,7 @@ if (isset($_POST["submit"])) {
                                 echo "{$info}";
                             }
                             if ("1" == $error) {
-                                echo "Duplicate Roll Number";
+                                echo "Duplicate Roll Number! Please try again...";
                             }
                             ?>
                         </p>
@@ -179,31 +211,62 @@ if (isset($_POST["submit"])) {
 
                     <?php endif; ?>
 
+                    <!-- Add Student Form -->
+
                     <?php
                     if ($task == "add") :
                     ?>
                         <div class="column column-100 column-offset-100">
-                            <form action="/lwhh/basic-crud/index.php?task=all" method="POST">
+                            <form action="/lwhh/basic-crud/index.php?task=add" method="POST">
 
                                 <label for="fname">First Name:</label>
-                                <input id="fname" name="fname" type="text">
+                                <input id="fname" name="fname" type="text" value="<?php echo $fname;?>">
 
                                 <label for="lname" placeholder="Enter First Name">Last Name:</label>
-                                <input id="lname" name="lname" type="text">
+                                <input id="lname" name="lname" type="text" value="<?php echo $lname;?>">
 
                                 <label for="roll" placeholder="Enter Roll Number">Roll:</label>
-                                <input id="roll" name="roll" type="number">
+                                <input id="roll" name="roll" type="number" value="<?php echo $roll;?>">
 
                                 <button class="button btn-green" name="submit" type="submit">Add New Student</button>
                             </form>
                         </div>
-
                     <?php endif; ?>
+
+                    <!-- Edit Student Info Form -->
+                    <?php
+                    if ($task == "edit") :
+                        $id = filter_input(INPUT_GET, "id", FILTER_SANITIZE_STRING);
+                        $student = getStudent($id, DB);
+
+                        if ($student):
+                    ?>
+                        <div class="column column-100 column-offset-100">
+                            <form method="POST">
+                                <input type="hidden" name ="id" value="<?php echo $id;?>">
+                                <label for="fname">First Name:</label>
+                                <input id="fname" name="fname" type="text" value="<?php echo $student["fname"];?>">
+
+                                <label for="lname" placeholder="Enter First Name">Last Name:</label>
+                                <input id="lname" name="lname" type="text" value="<?php echo $student["lname"];?>">
+
+                                <label for="roll" placeholder="Enter Roll Number">Roll:</label>
+                                <input id="roll" name="roll" type="number" min="1" max="999" value="<?php echo $student["roll"];?>">
+
+                                <button class="button btn-green" name="submit" type="submit">Update</button>
+                            </form>
+                        </div>
+
+                    <?php
+                    endif;
+                    endif;
+                     ?>
                 </div>
             </div>
         </div>
     </div>
 
+<script type="text/javascript" src="assets/main.js"></script>
 </body>
 
 </html>
